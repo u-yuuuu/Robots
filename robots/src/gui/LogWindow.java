@@ -1,5 +1,7 @@
 package gui;
 
+import java.util.Map;
+
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
 import java.awt.TextArea;
@@ -11,7 +13,12 @@ import log.LogChangeListener;
 import log.LogEntry;
 import log.LogWindowSource;
 
-public class LogWindow extends JInternalFrame implements LogChangeListener
+import java.beans.PropertyVetoException;
+
+
+
+
+public class LogWindow extends JInternalFrame implements LogChangeListener, Saveable
 {
     private LogWindowSource m_logSource;
     private TextArea m_logContent;
@@ -47,4 +54,57 @@ public class LogWindow extends JInternalFrame implements LogChangeListener
     {
         EventQueue.invokeLater(this::updateLogContent);
     }
+    
+    @Override
+    public String getIdentifier() {
+        return "logWindow";
+    }
+
+    @Override
+    public void saveState(Map<String, Object> state) {
+        state.put("x", this.getX());
+        state.put("y", this.getY());
+        state.put("width", this.getWidth());
+        state.put("height", this.getHeight());
+        state.put("isIcon", this.isIcon());
+        state.put("isMaximum", this.isMaximum());
+    }
+
+    @Override
+    public void loadState(Map<String, Object> state) {
+        // Объединяем установку позиции и размера через setBounds
+        if (state.containsKey("x") && state.containsKey("y") 
+            && state.containsKey("width") && state.containsKey("height")) {
+            int x = (int) state.get("x");
+            int y = (int) state.get("y");
+            int width = (int) state.get("width");
+            int height = (int) state.get("height");
+            setBounds(x, y, width, height);
+            
+        }
+        
+        // Применяем свернутое состояние
+        if (state.containsKey("isIcon")) {
+            boolean isIcon = (boolean) state.get("isIcon");
+            try {
+            	this.setIcon(isIcon);
+                
+            } catch (PropertyVetoException e) {
+            
+            }
+        }
+        
+        // Применяем максимизацию
+        if (state.containsKey("isMaximum")) {
+            boolean isMaximum = (boolean) state.get("isMaximum");
+            try {
+            	this.setMaximum(isMaximum);
+               
+            } catch (PropertyVetoException e) {
+               
+            }
+        }
+    }
+    
+    
 }

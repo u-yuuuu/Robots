@@ -7,6 +7,15 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.swing.*;
 
 import javax.swing.JDesktopPane;
@@ -38,6 +47,8 @@ public class MainApplicationFrame extends JFrame {
         gameWindow.setSize(400, 400);
         addWindow(gameWindow);
 
+        loadWindowStates();
+        
         setJMenuBar(generateMenuBar());
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
@@ -72,6 +83,7 @@ public class MainApplicationFrame extends JFrame {
                 "Подтверждение выхода",
                 JOptionPane.YES_NO_OPTION);
         if (result == JOptionPane.YES_OPTION) {
+        	saveWindowStates();
             System.exit(0);
         }
     }
@@ -126,6 +138,53 @@ public class MainApplicationFrame extends JFrame {
         } catch (ClassNotFoundException | InstantiationException
                 | IllegalAccessException | UnsupportedLookAndFeelException e) {
             // Игнорируем ошибку
+        }
+    }
+    
+    private void saveWindowStates() {
+        Map<String, Map<String, Object>> states = new HashMap<>();
+        for (JInternalFrame frame : desktopPane.getAllFrames()) {
+            if (frame instanceof Saveable) {
+                Saveable saveable = (Saveable) frame;
+                Map<String, Object> state = new HashMap<>();
+                saveable.saveState(state);
+                states.put(saveable.getIdentifier(), state);
+            }
+        }
+        File configFile = new File(System.getProperty("user.home"), "app_config.ser");
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(configFile))) {
+            oos.writeObject(states);
+        } catch (IOException e) {
+            Logger.error("Ошибка сохранения: " + e.getMessage());
+        }
+    }
+    
+    @SuppressWarnings("unchecked")
+    private void loadWindowStates() {
+    	File configFile = new File(System.getProperty("user.home"), "app_config.ser");
+        Logger.debug("Путь к конфигу: " + configFile.getAbsolutePath());
+        
+        if (!configFile.exists()) {
+            Logger.debug("Файл конфигурации не найден");
+            return;
+        }
+
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(configFile))) {
+            Map<String, Map<String, Object>> states = (Map<String, Map<String, Object>>) ois.readObject();
+            Logger.debug("Загружено состояний: " + states.size());
+            
+            for (JInternalFrame frame : desktopPane.getAllFrames()) {
+                if (frame instanceof Saveable) {
+                    Saveable saveable = (Saveable) frame;
+                    Map<String, Object> state = states.get(saveable.getIdentifier());
+                    if (state != null) {
+                        Logger.debug("Загрузка окна: " + saveable.getIdentifier());
+                        saveable.loadState(state);
+                    }
+                }
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            Logger.error("Ошибка загрузки: " + e.getClass().getName() + ": " + e.getMessage());
         }
     }
 }
