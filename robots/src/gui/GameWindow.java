@@ -3,17 +3,20 @@ package gui;
 import java.util.Map;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.beans.PropertyVetoException;
 
 import javax.swing.JInternalFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
-public class GameWindow extends JInternalFrame implements Saveable
+public class GameWindow extends JInternalFrame implements Saveable, LocalizedWindow
 {
     private final GameVisualizer m_visualizer;
     public GameWindow(RobotModel robot) 
     {
-        super("Игровое поле", true, true, true, true);
+    	super(LocalizationManager.getString("window.coords"), true, true, true, true);
         m_visualizer = new GameVisualizer(robot);
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(m_visualizer, BorderLayout.CENTER);
@@ -53,5 +56,13 @@ public class GameWindow extends JInternalFrame implements Saveable
             	this.setMaximum((boolean) state.get("isMaximum"));
             } catch (PropertyVetoException ignored) {}
         }
+    }
+    
+    @Override
+    public void updateLocalization() {
+    	try {
+    		setTitle(LocalizationManager.getString("window.log"));
+    	} catch (Exception e) {
+    	}
     }
 }

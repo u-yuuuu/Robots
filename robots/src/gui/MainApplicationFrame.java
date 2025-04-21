@@ -29,11 +29,16 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
+import java.util.Locale;
+import java.util.ResourceBundle;
+import gui.LocalizationManager;
+
 import log.Logger;
 
 public class MainApplicationFrame extends JFrame {
     private final JDesktopPane desktopPane = new JDesktopPane();
-
+    private JMenuBar menuBar;
+    
     public MainApplicationFrame() {
         int inset = 50;
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -53,6 +58,8 @@ public class MainApplicationFrame extends JFrame {
         
         loadWindowStates();
         
+        updateLocalization();
+        
         setJMenuBar(generateMenuBar());
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
@@ -62,7 +69,29 @@ public class MainApplicationFrame extends JFrame {
             }
         });
     }
-
+    
+    private void updateLocalization() {
+        SwingUtilities.updateComponentTreeUI(this);
+        updateWindowTitles();
+        regenerateMenuBar();
+    }
+    
+    private void regenerateMenuBar() {
+        if (menuBar != null) {
+            setJMenuBar(generateMenuBar());
+            revalidate();
+            repaint();
+        }
+    }
+    
+    private void updateWindowTitles() {
+        for (JInternalFrame frame : desktopPane.getAllFrames()) {
+            if (frame instanceof LocalizedWindow) {
+                ((LocalizedWindow) frame).updateLocalization();
+            }
+        }
+    }
+    
     // Метод для создания окна лога (должен быть protected)
     protected LogWindow createLogWindow() {
         LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
@@ -83,55 +112,71 @@ public class MainApplicationFrame extends JFrame {
     private void confirmAndExit() {
         int result = JOptionPane.showConfirmDialog(
                 this,
-                "Вы действительно хотите выйти?",
-                "Подтверждение выхода",
+                LocalizationManager.getString("exit.confirm"),
+                LocalizationManager.getString("exit.title"),
                 JOptionPane.YES_NO_OPTION);
         if (result == JOptionPane.YES_OPTION) {
-        	saveWindowStates();
+            saveWindowStates();
             System.exit(0);
         }
     }
 
     private JMenuBar generateMenuBar() {
-        JMenuBar menuBar = new JMenuBar();
+        menuBar = new JMenuBar();
         
-        JMenu fileMenu = new JMenu("Выход");
-        fileMenu.setMnemonic(KeyEvent.VK_F);
-        JMenuItem exitItem = new JMenuItem("Выход", KeyEvent.VK_X);
+        // Меню Файл
+        JMenu fileMenu = new JMenu(LocalizationManager.getString("menu.file"));
+        JMenuItem exitItem = new JMenuItem(LocalizationManager.getString("menu.exit"));
         exitItem.addActionListener(e -> confirmAndExit());
         fileMenu.add(exitItem);
         menuBar.add(fileMenu);
 
-        JMenu lookAndFeelMenu = new JMenu("Режим отображения");
-        lookAndFeelMenu.setMnemonic(KeyEvent.VK_V);
-        lookAndFeelMenu.getAccessibleContext().setAccessibleDescription("Управление режимом отображения приложения");
-
-        JMenuItem systemLookAndFeel = new JMenuItem("Системная схема", KeyEvent.VK_S);
+        // Меню Вид
+        JMenu viewMenu = new JMenu(LocalizationManager.getString("menu.view"));
+        
+        // Подменю Режим отображения
+        JMenu lookAndFeelMenu = new JMenu(LocalizationManager.getString("menu.lookandfeel"));
+        JMenuItem systemLookAndFeel = new JMenuItem(LocalizationManager.getString("menu.system_theme"));
         systemLookAndFeel.addActionListener((event) -> {
             setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            this.invalidate();
+            invalidate();
         });
         lookAndFeelMenu.add(systemLookAndFeel);
 
-        JMenuItem crossplatformLookAndFeel = new JMenuItem("Универсальная схема", KeyEvent.VK_S);
+        JMenuItem crossplatformLookAndFeel = new JMenuItem(LocalizationManager.getString("menu.crossplatform_theme"));
         crossplatformLookAndFeel.addActionListener((event) -> {
             setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-            this.invalidate();
+            invalidate();
         });
         lookAndFeelMenu.add(crossplatformLookAndFeel);
+        viewMenu.add(lookAndFeelMenu);
 
-        JMenu testMenu = new JMenu("Тесты");
-        testMenu.setMnemonic(KeyEvent.VK_T);
-        testMenu.getAccessibleContext().setAccessibleDescription("Тестовые команды");
-
-        JMenuItem addLogMessageItem = new JMenuItem("Сообщение в лог", KeyEvent.VK_S);
-        addLogMessageItem.addActionListener((event) -> {
-            Logger.debug("Новая строка");
+        // Подменю Язык
+        JMenu languageMenu = new JMenu(LocalizationManager.getString("menu.language"));
+        JMenuItem russianLang = new JMenuItem(LocalizationManager.getString("menu.lang_russian"));
+        russianLang.addActionListener(e -> {
+            LocalizationManager.setLocale(new Locale("ru", "RU"));
+            updateLocalization();
         });
-        testMenu.add(addLogMessageItem);
+        languageMenu.add(russianLang);
 
-        menuBar.add(lookAndFeelMenu);
+        JMenuItem englishLang = new JMenuItem(LocalizationManager.getString("menu.lang_english"));
+        englishLang.addActionListener(e -> {
+            LocalizationManager.setLocale(new Locale("en", "US"));
+            updateLocalization();
+        });
+        languageMenu.add(englishLang);
+        viewMenu.add(languageMenu);
+
+        menuBar.add(viewMenu);
+
+        // Меню Тесты
+        JMenu testMenu = new JMenu(LocalizationManager.getString("menu.tests"));
+        JMenuItem addLogMessageItem = new JMenuItem(LocalizationManager.getString("menu.test_log"));
+        addLogMessageItem.addActionListener((event) -> Logger.debug("New log message"));
+        testMenu.add(addLogMessageItem);
         menuBar.add(testMenu);
+
         return menuBar;
     }
 
@@ -191,4 +236,6 @@ public class MainApplicationFrame extends JFrame {
             Logger.error("Ошибка загрузки: " + e.getClass().getName() + ": " + e.getMessage());
         }
     }
+    
+    
 }

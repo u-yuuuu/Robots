@@ -1,6 +1,7 @@
 package gui;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.GridLayout;
 import java.beans.PropertyVetoException;
 import java.util.Map;
@@ -10,7 +11,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 public class RobotCoordWindow extends JInternalFrame 
-        implements Saveable, RobotModel.RobotModelObserver {
+        implements Saveable, RobotModel.RobotModelObserver, LocalizedWindow {
     private final JLabel xLabel = new JLabel("0.00");
     private final JLabel yLabel = new JLabel("0.00");
     private final JLabel dirLabel = new JLabel("0.00°");
@@ -78,5 +79,16 @@ public class RobotCoordWindow extends JInternalFrame
                 this.setMaximum(isMaximum);
             } catch (PropertyVetoException ignored) {}
         }
+    }
+    
+    @Override
+    public void updateLocalization() {
+        setTitle(LocalizationManager.getString("window.coords"));
+        SwingUtilities.invokeLater(() -> {
+            Component[] components = ((JPanel)getContentPane().getComponent(0)).getComponents();
+            ((JLabel)components[0]).setText(LocalizationManager.getString("label.x"));
+            ((JLabel)components[2]).setText(LocalizationManager.getString("label.y"));
+            ((JLabel)components[4]).setText(LocalizationManager.getString("label.direction"));
+        });
     }
 }

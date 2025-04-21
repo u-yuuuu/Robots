@@ -3,11 +3,14 @@ package gui;
 import java.util.Map;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.TextArea;
 
 import javax.swing.JInternalFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import log.LogChangeListener;
 import log.LogEntry;
@@ -18,14 +21,14 @@ import java.beans.PropertyVetoException;
 
 
 
-public class LogWindow extends JInternalFrame implements LogChangeListener, Saveable
+public class LogWindow extends JInternalFrame implements LogChangeListener, Saveable, LocalizedWindow
 {
     private LogWindowSource m_logSource;
     private TextArea m_logContent;
 
     public LogWindow(LogWindowSource logSource) 
     {
-        super("Протокол работы", true, true, true, true);
+    	super(LocalizationManager.getString("window.coords"), true, true, true, true);
         m_logSource = logSource;
         m_logSource.registerListener(this);
         m_logContent = new TextArea("");
@@ -106,5 +109,12 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Save
         }
     }
     
+    @Override
+    public void updateLocalization() {
+    	try {
+        setTitle(LocalizationManager.getString("window.log"));
+    	} catch (Exception e) {
+    	}
+    }
     
 }
