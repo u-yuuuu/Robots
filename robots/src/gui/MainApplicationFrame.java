@@ -42,11 +42,15 @@ public class MainApplicationFrame extends JFrame {
 
         LogWindow logWindow = createLogWindow();
         addWindow(logWindow);
-
-        GameWindow gameWindow = new GameWindow();
+        
+        RobotModel robot = new RobotModel();
+        GameWindow gameWindow = new GameWindow(robot);
         gameWindow.setSize(400, 400);
         addWindow(gameWindow);
-
+        
+        RobotCoordWindow coordWindow = new RobotCoordWindow(robot);
+        addWindow(coordWindow);
+        
         loadWindowStates();
         
         setJMenuBar(generateMenuBar());
